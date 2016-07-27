@@ -9,7 +9,7 @@ from autobahn.twisted.websocket import WebSocketClientFactory
 import sys
 import json
 import uuid
-
+ 
 class Data:
     def __init__(self):
         self.my_data = open("lieber_dump.txt","r").readlines()

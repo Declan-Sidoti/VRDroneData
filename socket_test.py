@@ -9,7 +9,7 @@ from autobahn.twisted.websocket import WebSocketClientFactory
 import sys
 import json
 import uuid
-
+ 
 try:
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     print "Socket successfully created"
