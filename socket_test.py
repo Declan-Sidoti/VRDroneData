@@ -9,7 +9,7 @@ from autobahn.twisted.websocket import WebSocketClientFactory
 import sys
 import json
 import uuid
- 
+
 try:
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     print "Socket successfully created"
@@ -30,10 +30,7 @@ def read():
         jpg = my_bytes[a:b+2]
         my_bytes = my_bytes[b+2:]
     end_data = base64.b64encode(my_bytes)
-    with open("lieber_dump.txt",'a') as of:
-        print "."
-        of.write(pickle.dumps([{"lieber":end_data}]))
-    return #pickle.dumps([{"lieber" : end_data}])
+    return pickle.dumps([{"lieber" : end_data}])
 
 class Data:
     def __init__(self):
@@ -46,10 +43,7 @@ class Data:
             jpg = self.my_bytes[a:b+2]
             self.my_bytes = self.my_bytes[b+2:]
         end_data = base64.b64encode(self.my_bytes)
-        with open("lieber_dump.txt",'a') as of:
-            print "."
-            of.write(base64.b64encode(pickle.dumps([{"lieber":end_data}]))+"\n" )
-        return #pickle.dumps([{"lieber" : end_data}])
+        return pickle.dumps([{"lieber" : end_data}])
 
 class ClientProtocol(WebSocketClientProtocol):
     def __init__(self):
