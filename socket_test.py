@@ -21,34 +21,53 @@ print "connected"
 #print tn.write('-N')
 
 time.time()
-
-class Data:
+import urllib2
+class Data(object):
     def __init__(self):
         self.my_bytes = b""
+        self.response = urllib2.urlopen("http://192.168.10.123:7060")
     def read(self):
-        self.my_bytes += tn.read_eager()
+        #new_bytes= tn.read_eager()
+        new_bytes= self.response.read(2048)
+        #print (new_bytes)
+        with open("bytestream.bin","a") as of: of.write(new_bytes)
+        self.my_bytes += new_bytes
         a = self.my_bytes.find(b"\xff\xd8")
         b = self.my_bytes.find(b"\xff\xd9")
-        if a!=-1 and b!=-1:
+        print a,b
+        if a!=-1 and b!=-1 and b>a:
+            print ("success")
             jpg = self.my_bytes[a:b+2]
             self.my_bytes = self.my_bytes[b+2:]
-        end_data = base64.b64encode(self.my_bytes)
-        print 1
-        return pickle.dumps([{"lieber" : end_data}])
+            end_data = base64.b64encode(jpg)
+            return json.dumps([{"lieber" : end_data}])
+        return
 
 class ClientProtocol(WebSocketClientProtocol):
     def __init__(self):
-        print "init"
-        self.data = Data()
+        self.data_class = Data()
+        self.spinner = spinner()
     def onOpen(self):
         self.sendMessage('[{"proto":{"identity":"'+str(uuid.uuid1())+'","type":"lieber"}}]')
-        LoopingCall(send).start(0.01)
+        LoopingCall(self.send).start(0.05)
     def onConnect(self, response):
         print "Server Connected: {0}:".format(response.peer)
-    def send():
-        print("sending")
-        self.sendMessage(self.data.read())
-        self.senMessage(time.time())
+    def send(self):
+        self.spinner.update()
+        my_msg = self.data_class.read()
+        if my_msg is not None:
+            self.sendMessage(my_msg.encode("utf-8"),isBinary =False)
+
+
+
+class spinner(object):
+    def __init__(self):
+        self.state = 0
+    def update(self):
+        self.state+=1
+        self.state%=2
+        sys.stdout.write(["\r | ","\r-- "][self.state])
+        sys.stdout.flush()
 
 #d=Data()
 #LoopingCall(d.read).start(0.5)
