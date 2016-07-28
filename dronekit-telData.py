@@ -6,7 +6,6 @@
 
 # Import DroneKit-Python
 
-
 from dronekit import connect, VehicleMode
 from twisted.internet import reactor, protocol, task
 from autobahn.twisted.websocket import WebSocketClientProtocol
@@ -51,8 +50,8 @@ class Data:
                                 "armed": v.armed,
 				"vx": v._vx,
 				"vy": v._vy,
-				"vz": v._vz                      
-                                }  
+				"vz": v._vz
+                                }
                     }
 
 	print [cur_data]
@@ -69,11 +68,10 @@ class ClientProtocol(WebSocketClientProtocol):
         print 2
         #Send message to server with client identity and type
         self.sendMessage('[{"proto":{"identity":"'+str(uuid.uuid1())+'","type":"uav"}}]')
-	
         LoopingCall(self.sendTelData).start(.05)
-    #sends telemetry data from the pixhawk to the server	
+    #sends telemetry data from the pixhawk to the server
     def sendTelData(self):
-        self.sendMessage(self.telData.update())        
+        self.sendMessage(self.telData.update())
     #What to do once the server is connected to the client
     def onConnect(self, response):
         print "Server Connected: {0}:".format(response.peer)
@@ -115,5 +113,3 @@ factory = WebSocketClientFactory(u"ws://www.csuiteexperiment.com:9002")
 factory.protocol = ClientProtocol
 reactor.connectTCP("www.csuiteexperiment.com", 9002, factory)
 reactor.run()
-
-

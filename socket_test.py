@@ -9,7 +9,7 @@ from autobahn.twisted.websocket import WebSocketClientFactory
 import sys
 import json
 import uuid
-
+import time
 try:
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     print "Socket successfully created"
@@ -20,17 +20,7 @@ tn = Telnet("192.168.10.123", 7060)
 print "connected"
 #print tn.write('-N')
 
-my_bytes = b""
-def read():
-    global my_bytes
-    my_bytes += tn.read_eager()
-    a = my_bytes.find(b"\xff\xd8")
-    b = my_bytes.find(b"\xff\xd9")
-    if a!=-1 and b!=-1:
-        jpg = my_bytes[a:b+2]
-        my_bytes = my_bytes[b+2:]
-    end_data = base64.b64encode(my_bytes)
-    return pickle.dumps([{"lieber" : end_data}])
+time.time()
 
 class Data:
     def __init__(self):
@@ -43,23 +33,30 @@ class Data:
             jpg = self.my_bytes[a:b+2]
             self.my_bytes = self.my_bytes[b+2:]
         end_data = base64.b64encode(self.my_bytes)
+        print 1
         return pickle.dumps([{"lieber" : end_data}])
 
 class ClientProtocol(WebSocketClientProtocol):
     def __init__(self):
-        self.data = Data()
         print "init"
+        self.data = Data()
     def onOpen(self):
         self.sendMessage('[{"proto":{"identity":"'+str(uuid.uuid1())+'","type":"lieber"}}]')
         LoopingCall(send).start(0.01)
     def onConnect(self, response):
         print "Server Connected: {0}:".format(response.peer)
     def send():
+        print("sending")
         self.sendMessage(self.data.read())
+        self.senMessage(time.time())
 
-d=Data()
-LoopingCall(d.read).start(0.5)
-factory = WebSocketClientFactory(u"ws://www.csuiteexperiment.com:9002")
+#d=Data()
+#LoopingCall(d.read).start(0.5)
+#Make a client factory that's directed at CSUITE
+factory = WebSocketClientFactory(u"ws://54.187.114.157:9002")
 factory.protocol = ClientProtocol
-reactor.connectTCP("www.csuiteexperiment.com", 9002, factory)
+print("server connection")
+reactor.connectTCP("54.187.114.157", 9002, factory)
+#54.187.114.157
+print("running")
 reactor.run()
