@@ -16,7 +16,6 @@ import sys
 import json
 import uuid
 v = connect('/dev/ttyAMA0', baud=57600)
-v.armed = True
 
 #class
 class Data:
@@ -25,14 +24,13 @@ class Data:
         print 1
         cur_data = {
                                 "uas_telemetry":{
-                                #"gps": v.gps_0,
+                                "gps": v.gps_0,
+                                "gps_fixtype":v.gps_0.fix_type,
                                 #"battery": v.battery,
                                 #"autopilot_firmware_versions": v.version,
                                 #"autopilot_capabilities": v.capabilities.ftp,
-                                "global_location": v.location.global_frame.lat,
-                                "global_location_relative_altitude": v.location.global_relative_frame.alt,
-                                #"local_location": v.location.local_frame,
-                                "attitude:": [v.attitude.pitch,v.attitude.roll,v.attitude.yaw],
+
+                                #"local_location": v.location.local_frame
                                 "velocity:": v.velocity,
                                 "groundspeed": v.groundspeed,
                                 "airspeed": v.airspeed,
@@ -53,10 +51,18 @@ class Data:
 				"vz": v._vz
                                 }
                     }
+        if cur_data['uas_telemetry']['gps_fixtype']==3:#0:no,1:2d,3:3d
+            cur_data['uas_telemetry']['gps_lat']= v.location.global_frame.lat
+            cur_data['uas_telemetry']['gps_lon']= v.location.global_frame.lon
+            cur_data['uas_telemetry']['gps_global_alt']=v.location.global_frame.alt
+            cur_data['uas_telemetry']['gps_local_alt']=v.location.global_relative_frame.alt
 
-	print [cur_data]
+
+            cur_data['uas_telemetry']['pitch']=v.attitude.pitch
+            cur_data['uas_telemetry']['yaw']=v.attitude.yaw
+            cur_data['uas_telemetry']['roll']=v.attitude.roll
         return json.dumps([cur_data])
-
+  
 
 class ClientProtocol(WebSocketClientProtocol):
     def __init__(self):

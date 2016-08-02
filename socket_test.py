@@ -16,8 +16,7 @@ try:
 except socket.error as err:
     print "socket creation failed with error %s" %(err)
 
-tn = Telnet("192.168.10.123", 7060)
-print "connected"
+#tn = Telnet("192.168.10.123", 7060)
 #print tn.write('-N')
 
 time.time()
@@ -28,9 +27,9 @@ class Data(object):
         self.response = urllib2.urlopen("http://192.168.10.123:7060")
     def read(self):
         #new_bytes= tn.read_eager()
-        new_bytes= self.response.read(2048)
+        new_bytes= self.response.read(2048*16+64)
         #print (new_bytes)
-        with open("bytestream.bin","a") as of: of.write(new_bytes)
+        #with open("bytestream.bin","a") as of: of.write(new_bytes)
         self.my_bytes += new_bytes
         a = self.my_bytes.find(b"\xff\xd8")
         b = self.my_bytes.find(b"\xff\xd9")
@@ -47,15 +46,19 @@ class ClientProtocol(WebSocketClientProtocol):
     def __init__(self):
         self.data_class = Data()
         self.spinner = spinner()
+        self.last_time = time.time()
     def onOpen(self):
         self.sendMessage('[{"proto":{"identity":"'+str(uuid.uuid1())+'","type":"lieber"}}]')
+        print("server connection")
         LoopingCall(self.send).start(0.05)
     def onConnect(self, response):
         print "Server Connected: {0}:".format(response.peer)
     def send(self):
         self.spinner.update()
         my_msg = self.data_class.read()
-        if my_msg is not None:
+        if my_msg is not None and time.time()-self.last_time > 0.4:
+            self.last_time = time.time()
+            print("###")
             self.sendMessage(my_msg.encode("utf-8"),isBinary =False)
 
 
@@ -74,7 +77,6 @@ class spinner(object):
 #Make a client factory that's directed at CSUITE
 factory = WebSocketClientFactory(u"ws://54.187.114.157:9002")
 factory.protocol = ClientProtocol
-print("server connection")
 reactor.connectTCP("54.187.114.157", 9002, factory)
 #54.187.114.157
 print("running")
