@@ -13,58 +13,37 @@ from twisted.web.static import File
 from autobahn.twisted.websocket import WebSocketClientProtocol, WebSocketClientFactory, listenWS
 import chardet
 
-camwrite = None
-cam = None
-class MyOutput():
-    def write(self, s):
-        camwrite(s)
+class Data(object):
+    def __init__(self):
+        print "init"
+
+    def read(self):
+        stream=io.BytesIO()
+        with picamera.PiCamera() as camera:
+            camera.resolution = (2592, 1944)
+            camera.capture (stream, format='jpeg', bayer=True)
+            print format(stream.seek(0,2),',d')
+            stream.seek (-6404096, io.SEEK_END )
+            assert stream.read(4) == 'BRCM'
+            camera.close()
 
 
 class ClientProtocol(WebSocketClientProtocol):
     def __init__(self):
-        global cam, camwrite
-        camwrite = self.sendBits
-        #cam = picamera.PiCamera()
-        cam = picamera.PiCameraCircularIO()
-        cam.framerate = 2
-        cam.exposure_mode = 'night'
-        print cam.readable()
+        self.my_data = Data()
 
     def onOpen(self):
         #Send message to server with client identity and type
         self.sendMessage('[{"proto":{"identity":"'+str(uuid.uuid1())+'","type":"visable_image"}}]')
-        self.record()
+        self.my_data.read()
 
     def sendBits(self, s):
         self.sendMessage('[{"video_stream":'+s.encode('base64')+'}]')
 
-
+    print "Test"
     def record(self):
-        print record
-        #cam.start_recording(MyOutput(), format = 'h264', bitrate=0, quality = 40)
-    #cam.wait_recording(1)
-    #cam.stop_recording()
 
-    def onMessage(self, payload, isBinary):
-        if not isBinary:
-            msg = "{} from {}".format(payload.decode('utf8'), self.peer)
-            #self.factory.broadcast(msg)
-            cmd = json.loads(payload)
-        if(cmd.has_key("cmd")):
-            if(cmd["cmd"]=="showPreview"):
-                cam.start_preview()
-            if(cmd["cmd"]=="hidePreview"):
-                cam.stop_preview()
-            if(cmd["cmd"]=="startRecord"):
-                loopingCall = task.LoopingCall(self.record)
-                loopingCall.start(1)
-            if(cmd["cmd"]=="stopRecord"):
-                cam.stop_recording()
-                loopingCall.stop()
-            if(cmd.has_key("framerate")):
-                cam.stop_recording()
-                cam.framerate=int(cmd["framerate"])
-                cam.start_recording(MyOutput(), format='h264',bitrate=0,quality=40)
+
 
 
 if __name__ == '__main__':
