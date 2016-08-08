@@ -23,7 +23,7 @@ from pylepton import Lepton
 class Data(object):
     def __init__(self):
         print "test"
-   
+
     def capture(self):
           print "capturing"
           flip_v = False
@@ -35,7 +35,7 @@ class Data(object):
           cv2.normalize(a, a, 0, 65535, cv2.NORM_MINMAX)
           np.right_shift(a, 8, a)
           return np.uint8(a)
-        
+
 
 
 class ClientProtocol(WebSocketClientProtocol):
@@ -49,9 +49,9 @@ class ClientProtocol(WebSocketClientProtocol):
     def sendThermal(self):
         image = self.data_class.capture()
         image = base64.b64encode(image)
-        print image
-        self.sendMessage(json.dumps({image}))
-        
+        packaged = json.dumps([{"ir_image" : image}])
+        self.sendMessage(packaged)
+
 
 if __name__ == '__main__':
     #Make a client factort that's directed at CSUITE
