@@ -13,20 +13,19 @@ from twisted.web.static import File
 from autobahn.twisted.websocket import WebSocketClientProtocol, WebSocketClientFactory, listenWS
 from pylepton import Lepton
 import chardet
+import cv2
+import sys
+import numpy as np
+import cv2
+from pylepton import Lepton
 
-class ClientProtocol(WebSocketClientProtocol):
+
+class Data(object):
     def __init__(self):
-        global image
-        self.image = None
-
-    def onOpen(self):
-        #Send message to server with client identity and type
-        self.sendMessage('[{"proto":{"identity":"'+str(uuid.uuid1())+'","type":"thermal_image"}}]')
-
-    def sendThermal(self):
-        self.sendMessage(image)
-        print image
-    def capture():
+        print "test"
+   
+    def capture(self):
+          print "capturing"
           flip_v = False
           device = "/dev/spidev0.0"
           with Lepton(device) as l:
@@ -36,22 +35,23 @@ class ClientProtocol(WebSocketClientProtocol):
           cv2.normalize(a, a, 0, 65535, cv2.NORM_MINMAX)
           np.right_shift(a, 8, a)
           return np.uint8(a)
+        
 
-    def onMessage(self, payload, isBinary):
-        if isBinary:
-            print "Binary Message"
-        else
-            self.digest(payload)
 
-    def digest(self, payload):
-        try:
-            payload=json.loads(payload)
-            if 'capture' in payload:
-                image = capture()
-        except Exception, e:
-            print "Payload not JSON formatted string"
-            print e
-
+class ClientProtocol(WebSocketClientProtocol):
+    def __init__(self):
+        self.image = None
+        self.data_class = Data()
+    def onOpen(self):
+        #Send message to server with client identity and type
+        self.sendMessage('[{"proto":{"identity":"'+str(uuid.uuid1())+'","type":"ir_cam"}}]')
+        LoopingCall(self.sendThermal).start(.5)
+    def sendThermal(self):
+        image = self.data_class.capture()
+        image = base64.b64encode(image)
+        print image
+        self.sendMessage(json.dumps({image}))
+        
 
 if __name__ == '__main__':
     #Make a client factort that's directed at CSUITE
