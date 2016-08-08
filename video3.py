@@ -22,10 +22,8 @@ class Data(object):
         with picamera.PiCamera() as camera:
             camera.resolution = (2592, 1944)
             camera.capture (stream, format='jpeg', bayer=True)
-            print format(stream.seek(0,2),',d')
-            stream.seek (-6404096, io.SEEK_END )
-            assert stream.read(4) == 'BRCM'
-            camera.close()
+            return stream
+        return
 
 
 class ClientProtocol(WebSocketClientProtocol):
@@ -34,16 +32,13 @@ class ClientProtocol(WebSocketClientProtocol):
 
     def onOpen(self):
         #Send message to server with client identity and type
-        self.sendMessage('[{"proto":{"identity":"'+str(uuid.uuid1())+'","type":"visable_image"}}]')
-        self.my_data.read()
+        self.sendMessage('[{"proto":{"identity":"'+str(uuid.uuid1())+'","type":"vis_image"}}]')
+        LoopingCall(self.sendBits).start(0.2)
 
     def sendBits(self, s):
-        self.sendMessage('[{"video_stream":'+s.encode('base64')+'}]')
-
-    print "Test"
-    def record(self):
-
-
+        image = base64.b64encode(self.my_data.read())
+        packaged = json.dumps([{"vis_image" : image}])
+        self.sendMessage(packaged)
 
 
 if __name__ == '__main__':
