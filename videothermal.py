@@ -21,10 +21,11 @@ class ClientProtocol(WebSocketClientProtocol):
 
     def onOpen(self):
         #Send message to server with client identity and type
-        self.sendMessage('[{"proto":{"identity":"'+str(uuid.uuid1())+'","type":"thermal_test"}}]')
+        self.sendMessage('[{"proto":{"identity":"'+str(uuid.uuid1())+'","type":"thermal_image"}}]')
 
     def sendThermal(self):
         self.sendMessage(image)
+        print image
     def capture():
           flip_v = False
           device = "/dev/spidev0.0"

@@ -50,7 +50,7 @@ class ClientProtocol(WebSocketClientProtocol):
     def onOpen(self):
         self.sendMessage('[{"proto":{"identity":"'+str(uuid.uuid1())+'","type":"lieber"}}]')
         print("server connection")
-        LoopingCall(self.send).start(0.05)
+        LoopingCall(self.send).start(0.2)
     def onConnect(self, response):
         print "Server Connected: {0}:".format(response.peer)
     def send(self):
@@ -58,7 +58,7 @@ class ClientProtocol(WebSocketClientProtocol):
         my_msg = self.data_class.read()
         if my_msg is not None and time.time()-self.last_time > 0.4:
             self.last_time = time.time()
-            print("###")
+            print(len(my_msg))
             self.sendMessage(my_msg.encode("utf-8"),isBinary =False)
 
 

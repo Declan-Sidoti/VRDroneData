@@ -1,4 +1,3 @@
-import sys
 import json
 import uuid
 import base64
@@ -15,17 +14,12 @@ import chardet
 
 camwrite = None
 cam = None
-class MyOutput():
-    def write(self, s):
-        camwrite(s)
-
 
 class ClientProtocol(WebSocketClientProtocol):
     def __init__(self):
         global cam, camwrite
         camwrite = self.sendBits
-        #cam = picamera.PiCamera()
-        cam = picamera.PiCameraCircularIO()
+        cam = picamera.PiCamera()
         cam.framerate = 2
         cam.exposure_mode = 'night'
         print cam.readable()
@@ -36,7 +30,33 @@ class ClientProtocol(WebSocketClientProtocol):
         self.record()
 
     def sendBits(self, s):
-        self.sendMessage('[{"video_stream":'+s.encode('base64')+'}]')
+            camera.resolution = (640, 480)
+            # Start a preview and let the camera warm up for 2 seconds
+            camera.start_preview()
+            time.sleep(2)
+            # Note the start time and construct a stream to hold image data
+            # temporarily (we could write it directly to connection but in this
+            # case we want to find out the size of each capture first to keep
+            # our protocol simple)
+            start = time.time()
+            stream = io.BytesIO()
+            for foo in camera.capture_continuous(stream, 'jpeg'):
+                # Write the length of the capture to the stream and flush to
+                # ensure it actually gets sent
+                connection.write(struct.pack('<L', stream.tell()))
+                connection.flush()
+                # Rewind the stream and send the image data over the wire
+                stream.seek(0)
+                connection.write(stream.read())
+                # If we've been capturing for more than 30 seconds, quit
+                if time.time() - start > 30:
+                    break
+                    # Reset the stream for the next capture
+                stream.seek(0)
+                stream.truncate()
+    # Write a length of zero to the stream to signal we're done
+    connection.write(struct.pack('<L', 0))
+        #self.sendMessage('[{"video_stream":'+s.encode('base64')+'}]')
 
 
     def record(self):
@@ -44,27 +64,6 @@ class ClientProtocol(WebSocketClientProtocol):
         #cam.start_recording(MyOutput(), format = 'h264', bitrate=0, quality = 40)
     #cam.wait_recording(1)
     #cam.stop_recording()
-
-    def onMessage(self, payload, isBinary):
-        if not isBinary:
-            msg = "{} from {}".format(payload.decode('utf8'), self.peer)
-            #self.factory.broadcast(msg)
-            cmd = json.loads(payload)
-        if(cmd.has_key("cmd")):
-            if(cmd["cmd"]=="showPreview"):
-                cam.start_preview()
-            if(cmd["cmd"]=="hidePreview"):
-                cam.stop_preview()
-            if(cmd["cmd"]=="startRecord"):
-                loopingCall = task.LoopingCall(self.record)
-                loopingCall.start(1)
-            if(cmd["cmd"]=="stopRecord"):
-                cam.stop_recording()
-                loopingCall.stop()
-            if(cmd.has_key("framerate")):
-                cam.stop_recording()
-                cam.framerate=int(cmd["framerate"])
-                cam.start_recording(MyOutput(), format='h264',bitrate=0,quality=40)
 
 
 if __name__ == '__main__':
