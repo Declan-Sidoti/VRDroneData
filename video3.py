@@ -27,11 +27,21 @@ class Data(object):
         self.camera = picamera.PiCamera()
 
     def read(self):
-        stream=io.BytesIO()
-        self.camera.framerate = 10
-        self.camera.resolution = (320, 200)
-        self.camera.capture_continuous (stream, format='jpeg', bayer=True)
-        return stream.getvalue()
+         # Set the camera's resolution to VGA @40fps and give it a couple
+        # of seconds to measure exposure etc.
+        self.camera.resolution = (80, 60)
+        self.camera.framerate = 80
+        #time.sleep(2)
+        # Set up 40 in-memory streams
+        outputs = [io.BytesIO() for i in range(40)]
+        start = time.time()
+        self.camera.capture_sequence(outputs, 'jpeg', use_video_port=True)
+        finish = time.time()
+        print finish-start
+        # How fast were we?
+        return outputs[39].getvalue()
+        
+        
 
 
 class ClientProtocol(WebSocketClientProtocol):
@@ -42,13 +52,14 @@ class ClientProtocol(WebSocketClientProtocol):
     def onOpen(self):
         #Send message to server with client identity and type
         self.sendMessage('[{"proto":{"identity":"'+str(uuid.uuid1())+'","type":"vis_image"}}]')
-        LoopingCall(self.sendBits).start(2)
+        LoopingCall(self.sendBits).start(.5)
 
     def sendBits(self):
         image = base64.b64encode(self.my_data.read())
         packaged = json.dumps([{"vis_image" : image}])
-        print image
+        print len(packaged)
         self.sendMessage(packaged)
+        print "sent"
 
 
 if __name__ == '__main__':

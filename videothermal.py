@@ -23,9 +23,8 @@ from pylepton import Lepton
 class Data(object):
     def __init__(self):
         print "test"
-
+    
     def capture(self):
-          print "capturing"
           flip_v = False
           device = "/dev/spidev0.0"
           with Lepton(device) as l:
@@ -34,7 +33,8 @@ class Data(object):
                 cv2.flip(a,0,a)
           cv2.normalize(a, a, 0, 65535, cv2.NORM_MINMAX)
           np.right_shift(a, 8, a)
-          return np.uint8(a)
+          return cv2.imencode('.jpg',np.uint8(a))[1].tostring()
+
 
 
 
@@ -50,6 +50,8 @@ class ClientProtocol(WebSocketClientProtocol):
         image = self.data_class.capture()
         image = base64.b64encode(image)
         packaged = json.dumps([{"ir_image" : image}])
+        print len(packaged)
+        #with open('this.png','wb') as of: of.write(self.data_class.capture())
         self.sendMessage(packaged)
 
 

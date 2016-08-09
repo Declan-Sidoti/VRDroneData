@@ -10,6 +10,9 @@ import sys
 import json
 import uuid
 import time
+import image
+import os
+import cStringIO as StringIO
 try:
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     print "Socket successfully created"
@@ -37,8 +40,16 @@ class Data(object):
         if a!=-1 and b!=-1 and b>a:
             print ("success")
             jpg = self.my_bytes[a:b+2]
+            c = StringIO.StringIO()
+            c.write(jpg)
+            c.seek(0)
+            im = Image.open(c)
+            im.thumbnail((80,60), Image.ANTIALIAS)
+            of = StringIO.StringIO()
+            im.save(of, "JPEG")
+            of.seek(0)
             self.my_bytes = self.my_bytes[b+2:]
-            end_data = base64.b64encode(jpg)
+            end_data = base64.b64encode(of)
             return json.dumps([{"lieber" : end_data}])
         return
 
